@@ -13,9 +13,7 @@ def input_error(func):
     return inner
 
 @input_error
-def add_contact(*args):
-    name, phone = args
-
+def add_contact(name, phone):
     if name in contacts:
         raise KeyError
 
@@ -23,18 +21,14 @@ def add_contact(*args):
     return f"Added contact: {name}, {phone}"
 
 @input_error
-def change_phone(*args):
-    name, phone = args
-
+def change_phone(name, phone):
     if name not in contacts:
         raise KeyError
     contacts[name] = phone
     return f"Changed phone number for contact {name} to {phone}"
 
 @input_error
-def show_phone(*args):
-    name = args
-
+def show_phone(name):
     if name not in contacts:
         raise IndexError
     return f"The phone number for {name} is {contacts[name]}"
@@ -52,24 +46,27 @@ def show_all():
 
 def main():
     while True:
-        message = 'Unknown command'
-        command, *arguments = input("Enter command: ").split(' ')
+        try:
+            message = 'Unknown command'
+            command, *arguments = f"{input('Enter command: ') or 'test'}".strip().lower().split()
 
-        if command == "hello":
-            message = "How can I help you?"
-        elif command.startswith("add"):
-            message = add_contact(*arguments or [''])
-        elif command.startswith("change"):
-            message = change_phone(*arguments or [''])
-        elif command.startswith("phone"):
-            message = show_phone(*arguments or [''])
-        elif len(arguments) > 0 and f"{command} {arguments[0]}" == "show all":
-            message = show_all()
-        elif command in ["good bye", "close", "exit", "."]:
-            print('Good bye!')
-            break
+            if command == "hello":
+                message = "How can I help you?"
+            elif command.startswith("add"):
+                message = add_contact(*arguments)
+            elif command.startswith("change"):
+                message = change_phone(*arguments)
+            elif command.startswith("phone"):
+                message = show_phone(*arguments)
+            elif len(arguments) > 0 and f"{command} {arguments[0]}" == "show all":
+                message = show_all()
+            elif command in ["good bye", "close", "exit", "."]:
+                print('Good bye!')
+                break
 
-        print(message)
+            print(message)
+        except TypeError:
+            print('Invalid input. Please try again.')
 
 if __name__ == "__main__":
     main()
