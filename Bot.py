@@ -1,72 +1,38 @@
-contacts = {}
+from collections import UserDict
 
-def input_error(func):
-    def inner(*args):
-        try:
-            return func(*args)
-        except KeyError:
-            return "Enter user name"
-        except ValueError:
-            return "Give me name and phone please"
-        except IndexError:
-            return "This user does not exist in the database"
-    return inner
 
-@input_error
-def add_contact(name, phone):
-    if name in contacts:
-        raise KeyError
+class AddressBook(UserDict):
+    def add_record(self, record):
+        self.data[record.name.value] = record
 
-    contacts[name] = phone
-    return f"Added contact: {name}, {phone}"
 
-@input_error
-def change_phone(name, phone):
-    if name not in contacts:
-        raise KeyError
-    contacts[name] = phone
-    return f"Changed phone number for contact {name} to {phone}"
+class Record:
+    def __init__(self, name, phone):
+        self.name = Name(name)
+        self.phone = [phone]
 
-@input_error
-def show_phone(name):
-    if name not in contacts:
-        raise IndexError
-    return f"The phone number for {name} is {contacts[name]}"
+    def add_phone(self, phone):
+        self.phone.append(phone)
 
-@input_error
-def show_all():
-    if not contacts:
-        return "No contacts found"
-    result = "Contacts:\n"
+    def remove_phone(self, phone):
+        self.phone.remove(phone)
 
-    for name, phone in contacts.items():
-        result += f"{name}, {phone}\n"
+    def change_phone(self, old_phone, new_phone):
+        old_index = self.phone.index(old_phone)
+        self.phone[old_index] = new_phone
 
-    return result.strip()
 
-def main():
-    while True:
-        try:
-            message = 'Unknown command'
-            command, *arguments = f"{input('Enter command: ') or 'test'}".strip().lower().split()
+class Field:
+    def __init__(self, value):
+        self.value = value
 
-            if command == "hello":
-                message = "How can I help you?"
-            elif command.startswith("add"):
-                message = add_contact(*arguments)
-            elif command.startswith("change"):
-                message = change_phone(*arguments)
-            elif command.startswith("phone"):
-                message = show_phone(*arguments)
-            elif len(arguments) > 0 and f"{command} {arguments[0]}" == "show all":
-                message = show_all()
-            elif command in ["good bye", "close", "exit", "."]:
-                print('Good bye!')
-                break
 
-            print(message)
-        except TypeError:
-            print('Invalid input. Please try again.')
+class Name(Field):
+    def __init__(self, name: str):
+        self.name = name
 
-if __name__ == "__main__":
-    main()
+
+class Phone(Field):
+    def __init__(self, phone):
+        self.phone = phone
+
