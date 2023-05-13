@@ -1,38 +1,110 @@
 from collections import UserDict
+from datetime import datetime
 
 
 class AddressBook(UserDict):
     def add_record(self, record):
         self.data[record.name.value] = record
 
+    def iterator(self, batch_size):
+        records = list(self.data.values())
+        for i in range(0, len(records), batch_size):
+            yield records[i:i+batch_size]
+
 
 class Record:
-    def __init__(self, name, phone):
+    def __init__(self, name, phone, birthday=None):
         self.name = Name(name)
-        self.phone = [phone]
+        self.phone = []
+        for num in phone:
+            self.phone.append(Phone(num))
+        self.birthday = Birthday(birthday) if birthday else None
 
     def add_phone(self, phone):
-        self.phone.append(phone)
+        self.phone.append(Phone(phone))
 
     def remove_phone(self, phone):
         self.phone.remove(phone)
 
     def change_phone(self, old_phone, new_phone):
-        old_index = self.phone.index(old_phone)
-        self.phone[old_index] = new_phone
+        try:
+            old_index = self.phone.index(old_phone)
+            self.phone[old_index] = Phone(new_phone)
+        except ValueError:
+            print(f"{old_phone} not found in phone list")
+
+    def days_to_birthday(self):
+        if not self.birthday:
+            return None
+        now = datetime.now()
+        bday = datetime(now.year, self.birthday.month, self.birthday.day)
+        if bday < now:
+            bday = datetime(now.year + 1, self.birthday.month, self.birthday.day)
+        delta = bday - now
+        return delta.days
+
+    @property
+    def phones(self):
+        return [phone.value for phone in self.phone]
+
+    @property
+    def birthday_date(self):
+        return self.birthday.value if self.birthday else None
+
+    @birthday_date.setter
+    def birthday_date(self, value):
+        self.birthday = Birthday(value)
+
 
 
 class Field:
     def __init__(self, value):
         self.value = value
 
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
+
 
 class Name(Field):
     def __init__(self, name: str):
-        self.name = name
+        super().__init__(name)
 
 
 class Phone(Field):
     def __init__(self, phone):
-        self.phone = phone
+        self._value = None
+        self.value = phone
+
+    @Field.value.setter
+    def value(self, phone):
+        if not isinstance(phone, str):
+            raise ValueError("Invalid phone number")
+        phone = phone.replace(' ', '').replace('-', '')
+        if not phone.isdigit():
+            raise ValueError("Invalid phone number")
+        if len(phone) != 10:
+            raise ValueError("Phone number must contain 10 digits")
+        self._value = phone[:3] + '-' + phone[3:6] + '-' + phone[6:]
+
+class Birthday(Field):
+    def __init__(self, birthday):
+        self._value = None
+        self.value = birthday
+
+    @Field.value.setter
+    def value(self, birthday):
+        if not isinstance(birthday, str):
+            raise ValueError("Invalid birthday")
+        try:
+            dt = datetime.strptime(birthday, '%d.%m.%Y')
+        except ValueError:
+            raise ValueError("Invalid birthday")
+        self._value = dt.date()
+
+
 
