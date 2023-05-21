@@ -1,5 +1,8 @@
+import pickle
+import re
 from collections import UserDict
 from datetime import datetime
+
 
 
 class AddressBook(UserDict):
@@ -10,6 +13,26 @@ class AddressBook(UserDict):
         records = list(self.data.values())
         for i in range(0, len(records), batch_size):
             yield records[i:i+batch_size]
+
+    def save(self, filename):
+        with open(filename, 'wb') as file:
+            pickle.dump(self.data, file)
+
+    def load(self, filename):
+        with open(filename, 'rb') as file:
+            self.data = pickle.load(file)
+
+    def search(self, query):
+        results = []
+        for record in self.data. values():
+            if re.search(query, record.name.value, re.IGNORECASE):
+                results.append(record)
+            else:
+                for phone in record.phone:
+                    if re.search(query, phone.value):
+                        results.append(record)
+                        break
+        return results
 
 
 class Record:
@@ -93,17 +116,14 @@ class Phone(Field):
 
 class Birthday(Field):
     def __init__(self, birthday):
-        self._value = None
         self.value = birthday
 
     @Field.value.setter
     def value(self, birthday):
-        if not isinstance(birthday, str):
-            raise ValueError("Invalid birthday")
         try:
             dt = datetime.strptime(birthday, '%d.%m.%Y')
-        except ValueError:
-            raise ValueError("Invalid birthday")
+        except (ValueError, TypeError):
+            raise Exception("Invalid birthday. Only string format dd.mm.yyyy")
         self._value = dt.date()
 
 
